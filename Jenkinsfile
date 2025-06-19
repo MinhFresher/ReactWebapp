@@ -14,6 +14,7 @@ pipeline {
         stage('Serve App') {
             steps {
                 bat 'npm install -g http-server'
+                bat 'dir dist'
                 bat 'start http-server dist -p 5000'
             }
         }
