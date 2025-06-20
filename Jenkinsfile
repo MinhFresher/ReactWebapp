@@ -17,7 +17,7 @@ pipeline {
         stage('Serve App') {
             steps {
                 // Start the server on port 5173
-                bat 'start /B node_modules\\.bin\\http-server dist -p 5173 > server.log 2>&1'
+                bat 'start /B node_modules\\.bin\\http-server dist -p 5173 -a 0.0.0.0 > server.log 2>&1'
                 // Wait a bit for the server to boot
                 bat 'ping 127.0.0.1 -n 4 >nul'
                 // Check if it's running
@@ -28,7 +28,7 @@ pipeline {
         stage('Start ngrok') {
             steps {
                 // Launch ngrok tunnel in background
-                bat 'start /B ngrok http 5173 > ngrok.log 2>&1'
+                bat 'start /B ngrok http 127.0.0.1:5173 > ngrok.log 2>&1'
                 // Wait until ngrok local API is up (port 4040)
                 bat '''
                 powershell -Command "
