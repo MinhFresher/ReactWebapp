@@ -28,7 +28,7 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
-      <h4>Hello guys welcome to my minecraft</h4>
+      <h4>Hello guys welcome to my city</h4>
     </>
   )
 }
