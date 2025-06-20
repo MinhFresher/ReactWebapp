@@ -1,7 +1,8 @@
 pipeline {
     agent any
+
     stages {
-        stage('Install') { 
+        stage('Install') {
             steps {
                 bat 'npm install'
             }
@@ -14,13 +15,14 @@ pipeline {
         stage('Serve App') {
             steps {
                 bat 'npm install -g http-server'
-                bat 'start http-server dist -p 5000'
+                bat 'npx http-server dist -p 5000 > server.log 2>&1 &'
             }
         }
         stage('Start ngrok') {
             steps {
                 // Run ngrok on the same port
-                bat 'start ngrok http 5000'
+                bat 'ngrok http 5000 > ngrok.log 2>&1 &'
+                bat 'timeout /T 5 >nul'
             }
         }
         stage('Test') {
@@ -30,8 +32,19 @@ pipeline {
         }
         stage('Show ngrok URL') {
             steps {
-                // This calls ngrok's local API to get the public URL
-                bat 'curl http://localhost:4040/api/tunnels'
+            // This calls ngrok's local API to get the public URL
+                powershell '''
+                    $resp = Invoke-RestMethod http://localhost:4040/api/tunnels
+                    $publicUrl = $resp.tunnels[0].public_url
+                    Write-Output "🌐 App is live at: $publicUrl"
+                '''
+            }
+        }
+        stage('Cleanup') {
+            // Kill node.exe (stop server)
+            steps {
+                bat 'taskkill /IM http-server.exe /F'
+                bat 'taskkill /IM ngrok.exe /F'
             }
         }
     }
