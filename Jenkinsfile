@@ -24,16 +24,32 @@ pipeline {
                 bat 'powershell "if (-not (Test-NetConnection localhost -Port 8080).TcpTestSucceeded) { Write-Error \\"Server not running\\"; exit 1 }"'
             }
         }
-
         stage('Start ngrok') {
             steps {
-                // Start ngrok tunnel on port 8080 in background
                 bat 'start /B ngrok http 8080 > ngrok.log 2>&1'
-                // Wait for ngrok to initialize
-                bat 'ping 127.0.0.1 -n 5 >nul'
+                bat 'ping 127.0.0.1 -n 3 >nul'
+                bat 'type ngrok.log'
+        
+                // Wait until ngrok local API is live
+                bat '''
+                powershell -Command "
+                $retries = 0;
+                while ($retries -lt 10) {
+                    try {
+                        Invoke-RestMethod http://localhost:4040/api/tunnels | Out-Null
+                        Write-Output '✅ ngrok started.'
+                        exit 0
+                    } catch {
+                        Start-Sleep -Seconds 1
+                        $retries++
+                    }
+                }
+                Write-Error '❌ ngrok failed to start.';
+                exit 1
+                "
+                '''
             }
         }
-
         stage('Test') {
             steps {
                 bat 'jenkins\\scripts\\test.bat'
