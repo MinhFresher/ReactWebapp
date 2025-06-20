@@ -28,7 +28,7 @@ pipeline {
         stage('Start ngrok') {
             steps {
                 // Launch ngrok tunnel in background
-                bat 'start /B ngrok http 127.0.0.1:5173 > ngrok.log 2>&1'
+                powershell 'Start-Process ngrok -ArgumentList \\"http 127.0.0.1:5173\\" -NoNewWindow -RedirectStandardOutput ngrok.log -RedirectStandardError ngrok.log'
                 // Wait until ngrok local API is up (port 4040)
                 bat '''
                 powershell -Command "
