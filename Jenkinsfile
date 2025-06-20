@@ -16,21 +16,20 @@ pipeline {
 
         stage('Serve App') {
             steps {
-                // Start http-server on port 8080 in background
-                bat 'start /B node_modules\\.bin\\http-server dist -p 8080 > server.log 2>&1'
-                // Wait for server to boot up
+                // Start the server on port 5173
+                bat 'start /B node_modules\\.bin\\http-server dist -p 5173 > server.log 2>&1'
+                // Wait a bit for the server to boot
                 bat 'ping 127.0.0.1 -n 4 >nul'
-                // Optionally confirm it’s listening
-                bat 'powershell "if (-not (Test-NetConnection localhost -Port 8080).TcpTestSucceeded) { Write-Error \\"Server not running\\"; exit 1 }"'
+                // Check if it's running
+                bat 'powershell "if (-not (Test-NetConnection localhost -Port 5173).TcpTestSucceeded) { Write-Error \\"Server not running\\"; exit 1 }"'
             }
         }
+
         stage('Start ngrok') {
             steps {
-                bat 'start /B ngrok http 8080 > ngrok.log 2>&1'
-                bat 'ping 127.0.0.1 -n 3 >nul'
-                bat 'type ngrok.log'
-        
-                // Wait until ngrok local API is live
+                // Launch ngrok tunnel in background
+                bat 'start /B ngrok http 5173 > ngrok.log 2>&1'
+                // Wait until ngrok local API is up (port 4040)
                 bat '''
                 powershell -Command "
                 $retries = 0;
@@ -50,6 +49,7 @@ pipeline {
                 '''
             }
         }
+
         stage('Test') {
             steps {
                 bat 'jenkins\\scripts\\test.bat'
@@ -68,7 +68,7 @@ pipeline {
 
         stage('Cleanup') {
             steps {
-                // Kill ngrok and node processes
+                // Kill ngrok and any node (http-server) processes
                 bat 'taskkill /F /IM ngrok.exe || echo ngrok not running'
                 bat 'taskkill /F /IM node.exe || echo node not running'
             }
