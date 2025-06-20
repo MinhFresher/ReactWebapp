@@ -15,7 +15,7 @@ pipeline {
         stage('Serve App') {
             steps {
                 bat 'start /B node_modules\\.bin\\http-server dist -p 5000 > server.log 2>&1'
-                bat 'timeout /T 3 >nul'
+                bat 'ping 127.0.0.1 -n 4 >nul'
             }
         }
         stage('Start ngrok') {
