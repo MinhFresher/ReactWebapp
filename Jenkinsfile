@@ -33,11 +33,14 @@ pipeline {
         }
         stage('Start ngrok') {
             steps {
-                bat 'start /B npx ngrok http 127.0.0.1:5173 > ngrok.log 2>&1'
-
                 powershell '''
+                    # Start ngrok process
+                    $ngrokCmd = "npx ngrok http 127.0.0.1:5173"
+                    Start-Process powershell -ArgumentList "-NoExit", "-Command", $ngrokCmd -WindowStyle Hidden
+        
+                    # Wait for ngrok API to respond
                     $retries = 0
-                    while ($retries -lt 10) {
+                    while ($retries -lt 15) {
                         try {
                             $resp = Invoke-RestMethod http://localhost:4040/api/tunnels
                             if ($resp.tunnels[0].public_url) {
@@ -49,6 +52,7 @@ pipeline {
                         }
                         $retries++
                     }
+        
                     Write-Error "❌ ngrok failed to start after waiting."
                     exit 1
                 '''
