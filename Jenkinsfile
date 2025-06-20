@@ -15,20 +15,18 @@ pipeline {
         }
         stage('Serve App') {
             steps {
-                bat 'start /B npx http-server dist -p 5173 -a 0.0.0.0 > server.log 2>&1'
                 powershell '''
-                    $max = 10; $i = 0
-                    while ($i -lt $max) {
-                        if ((Test-NetConnection -ComputerName 127.0.0.1 -Port 5173).TcpTestSucceeded) {
-                            Write-Host "✅ Server running"
-                            exit 0
-                        }
-                        Start-Sleep -Seconds 1
-                        $i++
-                    }
-                    Write-Error "❌ Server not responding on port 5173"
-                    exit 1
+                    Start-Process "npx" `
+                      -ArgumentList "http-server", "dist", "-p", "5173", "-a", "0.0.0.0" `
+                      -NoNewWindow `
+                      -RedirectStandardOutput "server.log" `
+                      -RedirectStandardError "server.log"
                 '''
+                Start-Sleep -Seconds 4
+                if (-not (Test-NetConnection localhost -Port 5173).TcpTestSucceeded) {
+                    Write-Error "❌ Server did not start."
+                    exit 1
+                }
             }
         }
         stage('Start ngrok') {
