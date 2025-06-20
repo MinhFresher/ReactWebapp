@@ -24,34 +24,21 @@ pipeline {
                 bat 'powershell "if (-not (Test-NetConnection localhost -Port 5173).TcpTestSucceeded) { Write-Error \\"Server not running\\"; exit 1 }"'
             }
         }
-
         stage('Start ngrok') {
-            steps {
-                // Launch ngrok tunnel in background
-                powershell '''
-                Start-Process ngrok `
-                  -ArgumentList "http 127.0.0.1:5173" `
-                  -NoNewWindow `
-                  -RedirectStandardOutput "ngrok-out.log" `
-                  -RedirectStandardError "ngrok-err.log"
-                '''
-                // Wait until ngrok local API is up (port 4040)
-               powershell '''
-                $retries = 0
-                while ($retries -lt 10) {
-                    try {
-                        $resp = Invoke-RestMethod http://localhost:4040/api/tunnels
-                        Write-Output "✅ ngrok started."
-                        exit 0
-                    } catch {
-                        Start-Sleep -Seconds 1
-                        $retries++
-                    }
-                }
-                Write-Error "❌ ngrok failed to start."
+          steps {
+            powershell '''
+            $ngrokPath = "C:\\Tools\\ngrok\\ngrok.exe"
+            if (-not (Test-Path $ngrokPath)) {
+                Write-Error "❌ ngrok.exe not found at $ngrokPath"
                 exit 1
-                '''
             }
+            Start-Process $ngrokPath `
+              -ArgumentList "http 127.0.0.1:5173" `
+              -NoNewWindow `
+              -RedirectStandardOutput "ngrok-out.log" `
+              -RedirectStandardError "ngrok-err.log"
+            '''
+          }
         }
         stage('Test') {
             steps {
