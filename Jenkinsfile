@@ -20,6 +20,7 @@ pipeline {
         }
         stage('Start ngrok') {
             steps {
+                // Run ngrok on the same port
                 bat 'ngrok http 5000 > ngrok.log 2>&1 &'
                 bat 'timeout /T 5 >nul'
             }
@@ -31,6 +32,7 @@ pipeline {
         }
         stage('Show ngrok URL') {
             steps {
+            // This calls ngrok's local API to get the public URL
                 powershell '''
                     $resp = Invoke-RestMethod http://localhost:4040/api/tunnels
                     $publicUrl = $resp.tunnels[0].public_url
