@@ -14,8 +14,8 @@ pipeline {
         }
         stage('Serve App') {
             steps {
-                bat 'npm install -g http-server'
-                bat 'npx http-server dist -p 5000 > server.log 2>&1 &'
+                bat 'node_modules\\.bin\\http-server dist -p 5000 > server.log 2>&1 &'
+                bat 'timeout /T 3 >nul' // wait for server to start
             }
         }
         stage('Start ngrok') {
