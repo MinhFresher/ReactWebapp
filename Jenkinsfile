@@ -21,12 +21,14 @@ pipeline {
                       -NoNewWindow `
                       -RedirectStandardOutput "server.log" `
                       -RedirectStandardError "server.log"
+        
+                    Start-Sleep -Seconds 4
+        
+                    if (-not (Test-NetConnection localhost -Port 5173).TcpTestSucceeded) {
+                        Write-Error "❌ Server did not start."
+                        exit 1
+                    }
                 '''
-                Start-Sleep -Seconds 4
-                if (-not (Test-NetConnection localhost -Port 5173).TcpTestSucceeded) {
-                    Write-Error "❌ Server did not start."
-                    exit 1
-                }
             }
         }
         stage('Start ngrok') {
