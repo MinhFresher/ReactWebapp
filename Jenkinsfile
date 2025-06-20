@@ -28,28 +28,31 @@ pipeline {
         stage('Start ngrok') {
             steps {
                 // Launch ngrok tunnel in background
-                powershell 'Start-Process ngrok -ArgumentList \\"http 127.0.0.1:5173\\" -NoNewWindow -RedirectStandardOutput ngrok.log -RedirectStandardError ngrok.log'
+                powershell '''
+                Start-Process ngrok `
+                  -ArgumentList "http 127.0.0.1:5173" `
+                  -NoNewWindow `
+                  -RedirectStandardOutput "ngrok-out.log" `
+                  -RedirectStandardError "ngrok-err.log"
+                '''
                 // Wait until ngrok local API is up (port 4040)
-                bat '''
-                powershell -Command "
-                $retries = 0;
+               powershell '''
+                $retries = 0
                 while ($retries -lt 10) {
                     try {
-                        Invoke-RestMethod http://localhost:4040/api/tunnels | Out-Null
-                        Write-Output '✅ ngrok started.'
+                        $resp = Invoke-RestMethod http://localhost:4040/api/tunnels
+                        Write-Output "✅ ngrok started."
                         exit 0
                     } catch {
                         Start-Sleep -Seconds 1
                         $retries++
                     }
                 }
-                Write-Error '❌ ngrok failed to start.';
+                Write-Error "❌ ngrok failed to start."
                 exit 1
-                "
                 '''
             }
         }
-
         stage('Test') {
             steps {
                 bat 'jenkins\\scripts\\test.bat'
