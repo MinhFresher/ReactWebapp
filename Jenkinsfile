@@ -1,6 +1,6 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Install') {
             steps {
@@ -13,34 +13,28 @@ pipeline {
                 bat 'npm run build'
             }
         }
-
         stage('Serve App') {
             steps {
-                // Start the server on port 5173 and bind to all interfaces
-                bat 'start /B node_modules\\.bin\\http-server dist -p 5173 -a 0.0.0.0 > server.log 2>&1'
-                
-                // Wait for the server to start
-                bat 'ping 127.0.0.1 -n 4 >nul'
-                
-                // Validate that the server is running
+                bat 'start /B npx http-server dist -p 5173 -a 0.0.0.0 > server.log 2>&1'
                 powershell '''
-                    if (-not (Test-NetConnection localhost -Port 5173).TcpTestSucceeded) {
-                        Write-Error "❌ Server not running on port 5173"
-                        exit 1
+                    $max = 10; $i = 0
+                    while ($i -lt $max) {
+                        if ((Test-NetConnection -ComputerName 127.0.0.1 -Port 5173).TcpTestSucceeded) {
+                            Write-Host "✅ Server running"
+                            exit 0
+                        }
+                        Start-Sleep -Seconds 1
+                        $i++
                     }
+                    Write-Error "❌ Server not responding on port 5173"
+                    exit 1
                 '''
             }
         }
-
         stage('Start ngrok') {
             steps {
-                // Start ngrok in background via npx
                 bat 'start /B npx ngrok http 127.0.0.1:5173 > ngrok.log 2>&1'
 
-                // Wait for ngrok to initialize
-                bat 'ping 127.0.0.1 -n 5 >nul'
-
-                // Verify that the ngrok tunnel is live
                 powershell '''
                     $retries = 0
                     while ($retries -lt 10) {
@@ -60,13 +54,11 @@ pipeline {
                 '''
             }
         }
-
         stage('Test') {
             steps {
                 bat 'jenkins\\scripts\\test.bat'
             }
         }
-
         stage('Show ngrok URL') {
             steps {
                 powershell '''
@@ -76,11 +68,10 @@ pipeline {
                 '''
             }
         }
-
         stage('Cleanup') {
             steps {
-                bat 'taskkill /F /IM ngrok.exe || echo ngrok not running'
-                bat 'taskkill /F /IM node.exe || echo http-server not running'
+                bat 'taskkill /F /IM ngrok.exe || exit 0'
+                bat 'taskkill /F /IM node.exe || exit 0'
             }
         }
     }
