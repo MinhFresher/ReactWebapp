@@ -40,5 +40,12 @@ pipeline {
                 '''
             }
         }
+        stage('Cleanup') {
+            // Kill node.exe (stop server)
+            steps {
+                bat 'taskkill /IM http-server.exe /F'
+                bat 'taskkill /IM ngrok.exe /F'
+            }
+        }
     }
 }
