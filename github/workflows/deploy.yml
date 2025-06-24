@@ -1,31 +1,35 @@
-name: Deploy React App to GitHub Pages
+name: 🚀 Deploy React App to GitHub Pages
 
 on:
   push:
     branches:
-      - main  # Or the name of your default branch
+      - main  # Adjust if your default branch is different
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout code
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: 🧰 Set up Node.js
+      - name:  Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
 
-      - name:  Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name:  Build the site
+      # OPTIONAL: Run tests (currently a dummy step to avoid errors)
+      - name: Dummy test step (replace with real tests later)
+        run: echo "No tests yet"
+
+      - name: Build site
         run: npm run build
 
-      - name:  Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
